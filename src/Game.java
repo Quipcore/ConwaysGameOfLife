@@ -1,85 +1,119 @@
 import java.io.IOException;
-import java.util.Random;
+import java.util.Scanner;
 
 public class Game {
 
     Cell[][] grid;
+    Cell[][] prevGrid;
 
     Window gameWindow;
+    Window prevWindow;
 
     private final int xCellAmount;
     private final int yCellAmount;
 
+    private Scanner scanner;
+
     public Game(int xCellAmount, int yCellAmount) throws IOException {
+        scanner = new Scanner(System.in);
         this.xCellAmount = xCellAmount;
         this.yCellAmount = yCellAmount;
 
-        //grid = setRandomGrid();
-        grid = setup();
+
+        grid = new Cell[xCellAmount][yCellAmount];
+        prevGrid = new Cell[xCellAmount][yCellAmount];
+        setup();
+        setupPrev(grid);
 
         int windowWidth = (grid[0][0].IMAGE_WIDTH+3)*xCellAmount;
         int windowHeight = (grid[0][0].IMAGE_HEIGHT+3)*yCellAmount;
 
         gameWindow = new Window(windowWidth, windowHeight, "Conways Game of Life", grid);
+        prevWindow = new Window(windowWidth, windowHeight, "Previous", grid);
     }
 
 
     public void run(int generations) throws IOException {
         for(int gen = 0; gen < generations; gen++){
-            grid = updateGrid();
+            scanner.nextLine();
+
+
+            updateGrid();
+            copyGrid(grid);
+
             gameWindow.refresh(grid);
-            System.out.println(gen);
+            prevWindow.refresh(prevGrid);
         }
     }
 
-    private Cell[][] setup() throws IOException {
-        Cell[][] temp = new Cell[xCellAmount][yCellAmount];
-        for (int i = 0; i < xCellAmount; i++) {
-            for (int j = 0; j < yCellAmount; j++) {
-                temp[i][j] = new Cell(false);
+    private void copyGrid(Cell[][] grid) {
+        for(int i = 0; i < xCellAmount; i++){
+            for(int j = 0; j < yCellAmount; j++){
+                prevGrid[i][j].setStatus(grid[i][j].getPreviousStatus());
             }
         }
-        return temp;
     }
-    private Cell[][] updateGrid() throws IOException {
 
-        /*
-        Cell[][] temp = new Cell[xCellAmount][yCellAmount];
+    private void setupPrev(Cell[][] grid) throws IOException {
         for (int i = 0; i < xCellAmount; i++) {
             for (int j = 0; j < yCellAmount; j++) {
-                temp[i][j] = new Cell(checkStatus(i,j));
+                prevGrid[i][j] = new Cell(grid[i][j].getPreviousStatus());
             }
         }
-        return temp;*/
+    }
 
+    private void setup() throws IOException {
+        for (int i = 0; i < xCellAmount; i++) {
+            for (int j = 0; j < yCellAmount; j++) {
+                grid[i][j] = new Cell(false);
+            }
+        }
 
+        setGlider();
+    }
+
+    private void setGlider() {
+        grid[2][0].setStatus(true);
+
+        grid[3][1].setStatus(true);
+
+        grid[1][2].setStatus(true);
+        grid[2][2].setStatus(true);
+        grid[3][2].setStatus(true);
+
+    }
+
+    private void updateGrid() {
         //update grid to follow conways rules
         for (int i = 0; i < xCellAmount; i++) {
             for (int j = 0; j < yCellAmount; j++) {
                 grid[i][j].setStatus(checkStatus(i,j));
             }
         }
-
-        return null;
-
     }
 
     private boolean checkStatus(int x, int y) {
         int aliveNeighbours = 0;
 
-        if(x > 0 && y > 0 && grid[x-1][y-1].isAlive()) aliveNeighbours++;
-        if(x > 0 && grid[x-1][y].isAlive()) aliveNeighbours++;
-        if(x > 0 && y < yCellAmount-1 && grid[x-1][y+1].isAlive()) aliveNeighbours++;
+        //check all neighbours of cell x,y and count alive ones
+        for(int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if(i == 0 && j == 0) continue;
 
-        if(y > 0 && grid[x][y-1].isAlive()) aliveNeighbours++;
-        if(y < yCellAmount-1 && grid[x][y+1].isAlive()) aliveNeighbours++;
+                int neighbourX = x + i;
+                int neighbourY = y + j;
 
-        if(x < xCellAmount-1 && y > 0 && grid[x+1][y-1].isAlive()) aliveNeighbours++;
-        if(x < xCellAmount-1 && grid[x+1][y].isAlive()) aliveNeighbours++;
-        if(x < xCellAmount-1 && y < yCellAmount-1 && grid[x+1][y+1].isAlive()) aliveNeighbours++;
+                if(neighbourX < 0 || neighbourY < 0 || neighbourX >= xCellAmount || neighbourY >= yCellAmount) continue;
 
+                if(grid[neighbourX][neighbourY].getPreviousStatus()) aliveNeighbours++;
+            }
+        }
 
-        return aliveNeighbours >= 2 && aliveNeighbours <= 3;
+        //Apply conways game of life rules and return result
+        if(grid[x][y].isAlive() && (aliveNeighbours == 2 || aliveNeighbours == 3)) return true;
+
+        return !grid[x][y].isAlive() && aliveNeighbours == 3;
+
     }
 
 }

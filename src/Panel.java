@@ -5,10 +5,11 @@ public class Panel extends JPanel {
 
 
     private final int BORDER = 2;
+    private boolean isPrevious;
 
     Cell[][] grid;
 
-    public Panel(Cell[][] grid) {
+    public Panel(Cell[][] grid){
         setGrid(grid);
     }
 
@@ -28,9 +29,5 @@ public class Panel extends JPanel {
 
     public void setGrid(Cell[][] grid) {
         this.grid = grid;
-    }
-
-    public void setGrid(){
-
     }
 }

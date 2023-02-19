@@ -8,7 +8,8 @@ public class Window{
     JFrame frame;
     Panel gamePanel;
 
-    public Window(int width, int height, String title,Cell[][] grid) {
+    public Window(int width, int height, String title,Cell[][] grid){
+
         frame = new JFrame(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         windowDimension = new Dimension(width, height);

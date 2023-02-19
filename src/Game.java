@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Game {
@@ -7,7 +8,7 @@ public class Game {
     Cell[][] prevGrid;
 
     Window gameWindow;
-    Window prevWindow;
+//    Window prevWindow;
 
     private final int xCellAmount;
     private final int yCellAmount;
@@ -25,31 +26,52 @@ public class Game {
         setup();
         setupPrev(grid);
 
-        int windowWidth = (grid[0][0].IMAGE_WIDTH+3)*xCellAmount;
-        int windowHeight = (grid[0][0].IMAGE_HEIGHT+3)*yCellAmount;
+        int windowWidth = (grid[0][0].IMAGE_WIDTH + 3) * xCellAmount;
+        int windowHeight = (grid[0][0].IMAGE_HEIGHT + 3) * yCellAmount;
 
         gameWindow = new Window(windowWidth, windowHeight, "Conways Game of Life", grid);
-        prevWindow = new Window(windowWidth, windowHeight, "Previous", grid);
+//        prevWindow = new Window(windowWidth, windowHeight, "Previous", grid);
     }
 
 
-    public void run(int generations) throws IOException {
-        for(int gen = 0; gen < generations; gen++){
+    public void run(int generations) throws IOException, InterruptedException {
+
+        if (generations < 0) {
+            while (!gridsAreEqual()) {
+                Thread.sleep(100);
+                copyGrid(grid);
+                updateGrid();
+            }
+
+            System.out.println("Game has reached a stable state");
+            System.exit(0);
+        }
+
+        for (int gen = 0; gen < generations; gen++) {
             scanner.nextLine();
 
-
-            updateGrid();
             copyGrid(grid);
+            updateGrid();
 
             gameWindow.refresh(grid);
-            prevWindow.refresh(prevGrid);
         }
     }
 
+    private boolean gridsAreEqual() {
+        for (int i = 0; i < xCellAmount; i++) {
+            for (int j = 0; j < yCellAmount; j++) {
+                if (grid[i][j].isAlive() != prevGrid[i][j].isAlive()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private void copyGrid(Cell[][] grid) {
-        for(int i = 0; i < xCellAmount; i++){
-            for(int j = 0; j < yCellAmount; j++){
-                prevGrid[i][j].setStatus(grid[i][j].getPreviousStatus());
+        for (int i = 0; i < xCellAmount; i++) {
+            for (int j = 0; j < yCellAmount; j++) {
+                prevGrid[i][j].setStatus(grid[i][j].isAlive());
             }
         }
     }
@@ -87,7 +109,7 @@ public class Game {
         //update grid to follow conways rules
         for (int i = 0; i < xCellAmount; i++) {
             for (int j = 0; j < yCellAmount; j++) {
-                grid[i][j].setStatus(checkStatus(i,j));
+                grid[i][j].setStatus(checkStatus(i, j));
             }
         }
     }
@@ -96,21 +118,22 @@ public class Game {
         int aliveNeighbours = 0;
 
         //check all neighbours of cell x,y and count alive ones
-        for(int i = -1; i <= 1; i++) {
+        for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                if(i == 0 && j == 0) continue;
+                if (i == 0 && j == 0) continue;
 
                 int neighbourX = x + i;
                 int neighbourY = y + j;
 
-                if(neighbourX < 0 || neighbourY < 0 || neighbourX >= xCellAmount || neighbourY >= yCellAmount) continue;
+                if (neighbourX < 0 || neighbourY < 0 || neighbourX >= xCellAmount || neighbourY >= yCellAmount)
+                    continue;
 
-                if(grid[neighbourX][neighbourY].getPreviousStatus()) aliveNeighbours++;
+                if (prevGrid[neighbourX][neighbourY].isAlive()) aliveNeighbours++;
             }
         }
 
         //Apply conways game of life rules and return result
-        if(grid[x][y].isAlive() && (aliveNeighbours == 2 || aliveNeighbours == 3)) return true;
+        if (grid[x][y].isAlive() && (aliveNeighbours == 2 || aliveNeighbours == 3)) return true;
 
         return !grid[x][y].isAlive() && aliveNeighbours == 3;
 
